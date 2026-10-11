@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Kotoba Minna no Nihongo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .kana-font {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        /* 3D Flip Styles */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .card-inner { transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+
+        /* Print formatting */
+        @media print {
+            body { background-color: white; padding: 0; }
+            .no-print { display: none !important; }
+            .screen-only { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        @media screen {
+            .print-only { display: none !important; }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+<div class="max-w-md mx-auto p-4 pt-6">
+    
+    <!-- Header Area -->
+    <div class="no-print">
+        <div class="flex items-center gap-2 mb-4">
+            <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <h1 class="text-xl font-bold text-teal-700 tracking-tight">Flashcard Kotoba</h1>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 mb-6">
+            <button onclick="prepareAndPrint()" class="flex items-center gap-2 bg-[#e6fcf5] text-teal-600 px-4 py-2 rounded-lg font-medium hover:bg-teal-100 transition-colors text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect width="12" height="8" x="6" y="14"/>
+                </svg>
+                Siapkan PDF
+            </button>
+            <button onclick="shareApp()" class="flex items-center gap-2 bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-medium hover:bg-slate-200 transition-colors text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                    <polyline points="16 6 12 2 8 6"/>
+                    <line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+                Bagikan
+            </button>
+        </div>
+
+        <!-- Pagination & Bab Navigasi -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6 text-center">
+            <div class="mb-4 text-[15px] text-slate-500">
+                <span class="font-bold text-teal-600 text-lg block mb-1" id="bab-title">Pelajaran 1</span>
+                Halaman <span class="font-bold text-teal-600" id="curr-page">1</span> dari <span id="tot-page">15</span> 
+                <span class="text-slate-400 ml-1" id="tot-words">(0 Kosakata)</span>
+            </div>
+            
+            <div class="flex justify-center items-center gap-3">
+                <button id="btn-prev" class="w-10 h-10 flex items-center justify-center border border-slate-200 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 disabled:opacity-50 transition-colors" onclick="changeBab(-1)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                
+                <button class="px-5 h-10 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 font-medium flex items-center gap-2 text-slate-600 text-sm transition-colors" onclick="resetCards()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                        <path d="M3 3v5h5"/>
+                    </svg>
+                    Acak Bab Ini
+                </button>
+                
+                <button id="btn-next" class="w-10 h-10 flex items-center justify-center border border-slate-200 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-colors" onclick="changeBab(1)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="grid grid-cols-2 gap-4 pb-8 screen-only" id="flashcard-grid"></div>
+
+    <!-- Print Container -->
+    <div id="print-container" class="print-only"></div>
+
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-xl text-sm transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+    <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+    <span id="toast-message">Link disalin!</span>
+</div>
+
+<script>
+const romajiMap = {
+    'あ':'a','い':'i','う':'u','え':'e','お':'o',
+    'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
+    'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
+    'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
+    'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
+    'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
+    'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
+    'や':'ya','ゆ':'yu','よ':'yo',
+    'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
+    'わ':'wa','を':'wo','ん':'n',
+    'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
+    'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
+    'だ':'da','ぢ':'ji','づ':'zu','で':'de','ど':'do',
+    'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
+    'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po',
+    'きゃ':'kya','きゅ':'kyu','きょ':'kyo',
+    'しゃ':'sha','しゅ':'shu','しょ':'sho',
+    'ちゃ':'cha','ちゅ':'chu','ちょ':'cho',
+    'にゃ':'nya','にゅ':'nyu','にょ':'nyo',
+    'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo',
+    'みゃ':'mya','みゅ':'myu','みょ':'myo',
+    'りゃ':'rya','りゅ':'ryu','りょ':'ryo',
+    'ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
+    'じゃ':'ja','じゅ':'ju','じょ':'jo',
+    'びゃ':'bya','びゅ':'byu','びょ':'byo',
+    'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo',
+    'ア':'a','イ':'i','ウ':'u','エ':'e','オ':'o',
+    'カ':'ka','キ':'ki','ク':'ku','ケ':'ke','コ':'ko',
+    'サ':'sa','シ':'shi','ス':'su','セ':'se','ソ':'so',
+    'タ':'ta','チ':'chi','ツ':'tsu','テ':'te','ト':'to',
+    'ナ':'na','ニ':'ni','ヌ':'nu','ネ':'ne','ノ':'no',
+    'ハ':'ha','ヒ':'hi','フ':'fu','ヘ':'he','ホ':'ho',
+    'マ':'ma','ミ':'mi','ム':'mu','メ':'me','モ':'mo',
+    'ヤ':'ya','ユ':'yu','ヨ':'yo',
+    'ラ':'ra','リ':'ri','ル':'ru','レ':'re','ロ':'ro',
+    'ワ':'wa','ヲ':'wo','ン':'n',
+    'ガ':'ga','ギ':'gi','グ':'gu','ゲ':'ge','ゴ':'go',
+    'ザ':'za','ジ':'ji','ズ':'zu','ゼ':'ze','ゾ':'zo',
+    'ダ':'da','ヂ':'ji','ヅ':'zu','デ':'de','ド':'do',
+    'バ':'ba','ビ':'bi','ブ':'bu','ベ':'be','ボ':'bo',
+    'パ':'pa','ピ':'pi','プ':'pu','ペ':'pe','ポ':'po'
+};
+
+function kanaToRomaji(kana) {
+    let result = "";
+    let i = 0;
+    while (i < kana.length) {
+        let char = kana[i];
+        let nextChar = kana[i+1] || "";
+        let combined = char + nextChar;
+        
+        if (romajiMap[combined]) {
+            result += romajiMap[combined]; i += 2;
+        } else if (romajiMap[char]) {
+            result += romajiMap[char]; i++;
+        } else if ((char === 'っ' || char === 'ッ') && nextChar) {
+            let nextRomaji = romajiMap[nextChar + (kana[i+2] || "")] || romajiMap[nextChar];
+            if (nextRomaji) result += nextRomaji[0];
+            i++;
+        } else if (char === 'ー' || char === '-') {
+            if (result.length > 0) result += result[result.length-1];
+            i++;
+        } else if (char === '・' || char === ' ') {
+            result += ' '; i++;
+        } else if (char === '〜' || char === '~') {
+            result += '~'; i++;
+        } else if (char === '[' || char === ']' || char === '（' || char === '）' || char === '(' || char === ')') {
+            result += char; i++;
+        } else {
+            result += char; i++;
+        }
+    }
+    return result;
+}
+
+// Master Data Kosakata per Bab (Semua Kanji telah dikonversi ke Hiragana)
+const babData = [
+    // Bab 1
+    [
+        ["わたし", "saya"],
+        ["あなた", "Anda"],
+        ["あのひと (あのかた)", "orang itu, beliau (あのかた bentuk sopan dari あのひと)"],
+        ["～さん", "Sdr. ~, Bapak ~, Ibu ~ (akhiran kesopanan nama)"],
+        ["～ちゃん", "akhiran yang dipakai untuk anak laki-laki dan anak perempuan"],
+        ["～じん", "orang ~ (akhiran yang menyatakan warga negara)"],
+        ["せんせい", "guru, dosen (tidak dipakai jika menyebutkan pekerjaan sendiri)"],
+        ["きょうし", "guru, dosen"],
+        ["がくせい", "mahasiswa"],
+        ["かいしゃいん", "karyawan perusahaan"],
+        ["しゃいん", "karyawan perusahaan (dipakai bersama dengan nama perusahaan)"],
+        ["ぎんこういん", "pegawai bank"],
+        ["いしゃ", "dokter"],
+        ["けんきゅうしゃ", "peneliti"],
+        ["だいがく", "universitas"],
+        ["びょういん", "rumah sakit"],
+        ["だれ (どなた)", "siapa (どなた adalah bentuk sopan dari だれ)"],
+        ["～さい", "～ tahun"],
+        ["なんさい (おいくつ)", "umur berapa (おいくつ adalah bentuk sopan dari なんさい)"],
+        ["はい", "ya"],
+        ["いいえ", "tidak, bukan"],
+        ["はじめまして", "Perkenalkan. (ucapan salam pada waktu pertama kali berkenalan)"],
+        ["～から きました", "datang dari ~, berasal dari ~"],
+        ["どうぞ よろしく [おねがいします]", "Salam kenal. (ucapan terakhir untuk memperkenalkan diri)"],
+        ["しつれいですが", "permisi, maaf (digunakan ketika bertanya tentang hal yang pribadi)"],
+        ["おなまえは？", "Siapa namanya?"],
+        ["こちらは ～さんです", "Ini Bapak ～ / Ini Ibu, Sdr. ～"],
+        ["アメリカ", "Amerika Serikat"],
+        ["イギリス", "Inggris"],
+        ["インド", "India"],
+        ["インドネシア", "Indonesia"],
+        ["かんこく", "Korea Selatan"],
+        ["タイ", "Thailand"],
+        ["ちゅうごく", "Cina"],
+        ["ドイツ", "Jerman"],
+        ["にほん", "Jepang"],
+        ["ブラジル", "Brasil"]
+    ],
+    // Bab 2
+    [
+        ["これ", "ini (benda yang ada di dekat si pembicara)"],
+        ["それ", "itu (benda yang ada di dekat lawan bicara)"],
+        ["あれ", "itu (benda yang ada jauh dari si pembicara dan lawan bicara)"],
+        ["この ～", "～ ini (menerangkan benda atau orang yang ada di dekat si pembicara)"],
+        ["その ～", "～ itu (menerangkan benda atau orang yang ada di dekat lawan bicara)"],
+        ["あの ～", "～ itu (menerangkan benda atau orang yang ada jauh dari si pembicara dan lawan bicara)"],
+        ["ほん", "buku"],
+        ["じしょ", "kamus"],
+        ["ざっし", "majalah"],
+        ["しんぶん", "koran, surat kabar"],
+        ["ノート", "buku tulis, buku catatan"],
+        ["てちょう", "buku agenda"],
+        ["めいし", "kartu nama"],
+        ["カード", "kartu"],
+        ["えんぴつ", "pensil"],
+        ["ボールペン", "bolpoint"],
+        ["シャープペンシル", "pensil mekanik, pensil isi ulang"],
+        ["かぎ", "kunci"],
+        ["とけい", "jam, arloji"],
+        ["かさ", "payung"],
+        ["かばん", "tas"],
+        ["CD", "CD"],
+        ["テレビ", "televisi"],
+        ["ラジオ", "radio"],
+        ["カメラ", "kamera"],
+        ["コンピューター", "komputer, PC"],
+        ["くるま", "mobil"],
+        ["つくえ", "meja, meja tulis"],
+        ["いす", "kursi"],
+        ["チョコレート", "coklat"],
+        ["コーヒー", "kopi"],
+        ["[お]みやげ", "oleh-oleh"],
+        ["えいご", "bahasa Inggris"],
+        ["にほんご", "bahasa Jepang"],
+        ["～ご", "bahasa ～"],
+        ["なん", "apa"],
+        ["そう", "begitu"],
+        ["あのう", "Eee… (ungkapan yang digunakan kepada lawan bicara dalam perasaan ragu-ragu)"],
+        ["えっ", "Eh (dipakai ketika mendengar sesuatu yang di luar dugaan)"],
+        ["どうぞ。", "Silakan. (digunakan ketika menawarkan sesuatu (barang))"],
+        ["[どうも] ありがとう [ございます]。", "Terima kasih (banyak)."],
+        ["そうですか。", "O, begitu./O, ya."],
+        ["ちがいます。", "Bukan./Tidak./Salah."],
+        ["あ", "O, Eh, (dipakai ketika sadar)"],
+        ["これから おせわに なります。", "Mulai sekarang, saya akan meminta bantuannya."],
+        ["こちらこそ [どうぞ] よろしく [おねがいします]。", "Ya, sama-sama. (jawaban terhadap [どうぞ] よろしく [おねがいします]。 )"]
+    ],
+    // Bab 3
+    [
+        ["ここ", "sini"],
+        ["そこ", "situ"],
+        ["あそこ", "sana"],
+        ["どこ", "(di) mana"],
+        ["こちら", "sini (bentuk sopan dari ここ)"],
+        ["そちら", "situ (bentuk sopan dari そこ)"],
+        ["あちら", "sana (bentuk sopan dari あそこ)"],
+        ["どちら", "mana (bentuk sopan dari どこ)"],
+        ["きょうしつ", "ruang kelas"],
+        ["しょくどう", "ruang makan, rumah makan, kantin"],
+        ["じむしょ", "kantor"],
+        ["かいぎしつ", "ruang rapat"],
+        ["うけつけ", "meja informasi"],
+        ["ロビー", "ruang tunggu, lobi"],
+        ["へや", "kamar"],
+        ["トイレ (おてあらい)", "kamar kecil, toilet, W.C."],
+        ["かいだん", "tangga"],
+        ["エレベーター", "lift"],
+        ["エスカレーター", "tangga berjalan, eskalator"],
+        ["じどうはんばいき", "mesin jual otomatis"],
+        ["でんわ", "telepon"],
+        ["[お]くに", "negara, negeri"],
+        ["かいしゃ", "perusahaan"],
+        ["うち", "rumah"],
+        ["くつ", "sepatu"],
+        ["ネクタイ", "dasi"],
+        ["ワイン", "anggur"],
+        ["うりば", "tempat penjualan"],
+        ["ちか", "bawah tanah, basement"],
+        ["～かい (～がい)", "lantai ～, tingkat ～"],
+        ["なんがい", "lantai berapa, tingkat berapa"],
+        ["～えん", "～ yen"],
+        ["いくら", "berapa"],
+        ["ひゃく", "ratus"],
+        ["せん", "ribu"],
+        ["まん", "puluh ribu"],
+        ["すみません。", "Maaf./Permisi."],
+        ["どうも。", "Terima kasih."],
+        ["いらっしゃいませ。", "Selamat datang./Bisa saya bantu? (ungkapan kepada tamu yang masuk ke toko)"],
+        ["[～を] みせて ください。", "Tolong perlihatkan [～]."],
+        ["じゃ", "Baiklah, kalau begitu"],
+        ["[～を] ください。", "Minta [～]./Tolong berikan [～]."],
+        ["イタリア", "Italia"],
+        ["スイス", "Swiss"],
+        ["フランス", "Perancis"],
+        ["ジャカルタ", "Jakarta"],
+        ["バンコク", "Bangkok"],
+        ["ベルリン", "Berlin"]
+    ],
+    // Bab 4
+    [
+        ["おきます", "bangun"],
+        ["ねます", "tidur"],
+        ["はたらきます", "bekerja"],
+        ["やすみます", "beristirahat, libur"],
+        ["べんきょうします", "belajar"],
+        ["おわります", "selesai"],
+        ["デパート", "toserba"],
+        ["ぎんこう", "bank"],
+        ["ゆうびんきょく", "kantor pos"],
+        ["としょかん", "perpustakaan"],
+        ["びじゅつかん", "gedung kesenian"],
+        ["いま", "sekarang"],
+        ["～じ", "jam ～, pukul ～"],
+        ["～ふん (～ぷん)", "～ menit"],
+        ["はん", "setengah"],
+        ["なんじ", "jam berapa, pukul berapa"],
+        ["なんぷん", "berapa menit"],
+        ["ごぜん", "a.m. (waktu sebelum jam 12 siang)"],
+        ["ごご", "p.m. (waktu setelah jam 12 siang)"],
+        ["あさ", "pagi"],
+        ["ひる", "siang"],
+        ["ばん (よる)", "malam"],
+        ["おととい", "dua hari yang lalu, kemarin lusa"],
+        ["きのう", "kemarin"],
+        ["きょう", "hari ini"],
+        ["あした", "besok"],
+        ["あさって", "lusa"],
+        ["けさ", "pagi ini, tadi pagi"],
+        ["こんばん", "malam ini, nanti malam"],
+        ["やすみ", "istirahat, cuti, libur"],
+        ["ひるやすみ", "istirahat siang"],
+        ["しけん", "ujian"],
+        ["かいぎ", "rapat (～を します: mengadakan rapat)"],
+        ["えいが", "film"],
+        ["まいあさ", "setiap pagi"],
+        ["まいばん", "setiap malam"],
+        ["まいにち", "setiap hari"],
+        ["げつようび", "hari Senin"],
+        ["かようび", "hari Selasa"],
+        ["すいようび", "hari Rabu"],
+        ["もくようび", "hari Kamis"],
+        ["きんようび", "hari Jumat"],
+        ["どようび", "hari Sabtu"],
+        ["にちようび", "hari Minggu"],
+        ["なんようび", "hari apa"],
+        ["～から", "dari ～"],
+        ["～まで", "sampai ～"],
+        ["～と ～", "～ dan ～ (digunakan jika menyambung kata benda)"],
+        ["たいへんですね。", "O, berat ya. (ungkapan untuk menyatakan rasa simpati dari lawan bicara terhadap si pembicara yang mengalami suatu hal yang dianggap susah)"],
+        ["ばんごう", "nomor"],
+        ["なんばん", "nomor berapa"],
+        ["そちら", "di situ"],
+        ["ニューヨーク", "New York"],
+        ["ペキン", "Beijing"],
+        ["ロサンゼルス", "Los Angels"],
+        ["ロンドン", "London"]
+    ],
+    // Bab 5
+    [
+        ["いきます", "pergi"],
+        ["きます", "datang"],
+        ["かえります", "pulang"],
+        ["がっこう", "sekolah"],
+        ["スーパー", "pasar swalayan"],
+        ["えき", "stasiun"],
+        ["ひこうき", "pesawat terbang"],
+        ["ふね", "kapal laut"],
+        ["でんしゃ", "kereta rel listrik"],
+        ["ちかてつ", "kereta bawah tanah"],
+        ["しんかんせん", "Shinkansen"],
+        ["バス", "bus"],
+        ["タクシー", "taksi"],
+        ["じてんしゃ", "sepeda"],
+        ["あるいて", "dengan berjalan kaki"],
+        ["ひと", "orang"],
+        ["ともだち", "teman"],
+        ["かれ", "dia, ia (laki-laki)"],
+        ["かのじょ", "dia, ia (perempuan)"],
+        ["かぞく", "keluarga"],
+        ["ひとりで", "sendirian, dengan sendiri"],
+        ["せんしゅう", "minggu lalu"],
+        ["こんしゅう", "minggu ini"],
+        ["らいしゅう", "minggu depan"],
+        ["せんげつ", "bulan lalu"],
+        ["こんげつ", "bulan ini"],
+        ["らいげつ", "bulan depan"],
+        ["きょねん", "tahun lalu"],
+        ["ことし", "tahun ini"],
+        ["らいねん", "tahun depan"],
+        ["～ねん", "tahun ～"],
+        ["なんねん", "tahun berapa"],
+        ["～がつ", "bulan ～"],
+        ["なんがつ", "bulan apa"],
+        ["ついたち", "tanggal satu"],
+        ["ふつか", "tanggal dua, dua hari"],
+        ["みっか", "tanggal tiga, tiga hari"],
+        ["よっか", "tanggal empat, empat hari"],
+        ["いつか", "tanggal lima, lima hari"],
+        ["むいか", "tanggal enam, enam hari"],
+        ["なのか", "tanggal tujuh, tujuh hari"],
+        ["ようか", "tanggal delapan, delapan hari"],
+        ["ここのか", "tanggal sembilan, sembilan hari"],
+        ["とおか", "tanggal sepuluh, sepuluh hari"],
+        ["じゅうよっか", "tanggal empat belas, empat belas hari"],
+        ["はつか", "tanggal dua puluh, dua puluh hari"],
+        ["にじゅうよっか", "tanggal dua puluh empat, dua puluh empat hari"],
+        ["～にち", "tanggal ～, ～ hari"],
+        ["なんにち", "tanggal berapa, berapa hari"],
+        ["いつ", "kapan"],
+        ["たんじょうび", "hari ulang tahun"],
+        ["そうですね。", "Ya, betul./Ya, begitulah."],
+        ["[どうも] ありがとう ございました。", "Terima kasih [banyak]."],
+        ["どう いたしまして。", "Sama-sama."],
+        ["～ばんせん", "peron nomor ～"],
+        ["つぎの", "yang berikutnya"],
+        ["ふつう", "biasa"],
+        ["きゅうこう", "ekspres"],
+        ["とっきゅう", "super ekspres"]
+    ],
+    // Bab 6
+    [
+        ["たべます", "makan"],
+        ["のみます", "minum"],
+        ["すいます [たばこを～]", "mengisap [rokok], merokok"],
+        ["みます", "melihat, menonton"],
+        ["ききます", "mendengar"],
+        ["よみます", "membaca"],
+        ["かきます", "menulis, menggambar"],
+        ["かいます", "membeli"],
+        ["とります [しゃしんを～]", "mengambil [foto]"],
+        ["します", "mengerjakan, melakukan, berbuat"],
+        ["あいます [ともだちに～]", "bertemu [dengan teman]"],
+        ["ごはん", "nasi"],
+        ["あさごはん", "sarapan"],
+        ["ひるごはん", "makan siang"],
+        ["ばんごはん", "makan malam"],
+        ["パン", "roti"],
+        ["たまご", "telur"],
+        ["にく", "daging"],
+        ["さかな", "ikan"],
+        ["やさい", "sayur"],
+        ["くだもの", "buah-buahan"],
+        ["みず", "air"],
+        ["おちゃ", "teh, teh Jepang (teh hijau)"],
+        ["こうちゃ", "teh"],
+        ["ぎゅうにゅう (ミルク)", "susu"],
+        ["ジュース", "jus, sari buah"],
+        ["ビール", "bir"],
+        ["[お]さけ", "minuman keras"],
+        ["たばこ", "rokok"],
+        ["てがみ", "surat"],
+        ["レポート", "laporan"],
+        ["しゃしん", "foto"],
+        ["ビデオ", "kaset video, VHS"],
+        ["みせ", "toko"],
+        ["にわ", "halaman"],
+        ["しゅくだい", "pekerjaan rumah, PR (～を します: mengerjakan PR)"],
+        ["テニス", "tenis (～を します: bermain tenis)"],
+        ["サッカー", "sepak bola (～を します: bermain sepak bola)"],
+        ["[お]はなみ", "(O) Hanami, menikmati bunga Sakura (～を します: melihat dan menikmati bunga Sakura)"],
+        ["なに", "apa"],
+        ["いっしょに", "bersama-sama"],
+        ["ちょっと", "sebentar, sedikit"],
+        ["いつも", "selalu"],
+        ["ときどき", "kadang-kadang"],
+        ["それから", "setelah itu, kemudian"],
+        ["ええ", "ya"],
+        ["いいですね。", "Bagus ya./Baik ya."],
+        ["わかりました。", "Mengerti./Baik."],
+        ["なんですか。", "Apa?"],
+        ["じゃ、また [あした]。", "Ok, sampai jumpa [besok]."],
+        ["メキシコ", "Meksiko"]
+    ],
+    // Bab 7
+    [
+        ["きります", "memotong, menggunting"],
+        ["おくります", "mengirim"],
+        ["あげます", "memberikan"],
+        ["もらいます", "mendapatkan, menerima"],
+        ["かします", "meminjamkan, menyewakan"],
+        ["かります", "meminjam, menyewa"],
+        ["おしえます", "mengajar"],
+        ["ならいます", "belajar"],
+        ["かけます [でんわを～]", "menelepon"],
+        ["て", "tangan"],
+        ["はし", "sumpit"],
+        ["スプーン", "sendok"],
+        ["ナイフ", "pisau"],
+        ["フォーク", "garpu"],
+        ["はさみ", "gunting"],
+        ["パソコン", "komputer, PC"],
+        ["ケータイ", "HP"],
+        ["メール", "e-mail"],
+        ["ねんがじょう", "kartu tahun baru"],
+        ["パンチ", "pelubang kertas"],
+        ["ホッチキス", "staplar"],
+        ["セロテープ", "selotip"],
+        ["けしゴム", "penghapus karet"],
+        ["かみ", "kertas"],
+        ["はな", "bunga"],
+        ["シャツ", "kemeja"],
+        ["プレゼント", "kado, hadiah"],
+        ["にもつ", "barang"],
+        ["おかね", "uang"],
+        ["きっぷ", "karcis"],
+        ["クリスマス", "Natal"],
+        ["ちち", "bapak, ayah"],
+        ["はは", "ibu"],
+        ["おとうさん", "bapak, ayah (ayah orang lain, dan digunakan untuk bapak kandung sendiri juga ketika memanggilnya)"],
+        ["おかあさん", "ibu (ibu orang lain, dan digunakan untuk ibu kandung sendiri juga ketika memanggilnya)"],
+        ["もう", "sudah"],
+        ["まだ", "belum"],
+        ["これから", "mulai dari sekarang"],
+        ["[～,] すてきですね。", "[～] bagus ya./[～] indah ya."],
+        ["いらっしゃい。", "Selamat datang."],
+        ["どうぞ おあがり ください。", "Silakan masuk."],
+        ["しつれいします。", "Permisi."],
+        ["[～は] いかがですか。", "Bagaimana [～]? (digunakan saat menawarkan sesuatu kepada orang)"],
+        ["いただきます。", "Selamat makan! (diucapkan sebelum minum dan makan makanan)"],
+        ["ごちそうさま[でした]。", "Terima kasih atas hidangannya. (diucapkan setelah minum dan makan makanan)"],
+        ["スペイン", "Spanyol"]
+    ],
+    // Bab 8
+    [
+        ["ハンサム[な]", "tampan, gagah, ganteng"],
+        ["きれい[な]", "cantik, bersih"],
+        ["しずか[な]", "sunyi, tenang"],
+        ["にぎやか[な]", "ramai"],
+        ["ゆうめい[な]", "terkenal"],
+        ["しんせつ[な]", "baik hati (tidak digunakan untuk keluarga sendiri)"],
+        ["げんき[な]", "sehat walafiat"],
+        ["ひま[な]", "senggang"],
+        ["べんり[な]", "praktis"],
+        ["すてき[な]", "bagus"],
+        ["おおきい", "besar"],
+        ["ちいさい", "kecil"],
+        ["あたらしい", "baru"],
+        ["ふるい", "lama, tua"],
+        ["いい (よい)", "baik, bagus"],
+        ["わるい", "buruk, jelek"],
+        ["あつい", "panas"],
+        ["さむい", "dingin (mengungkapkan tentang suhu udara)"],
+        ["つめたい", "dingin (mengungkapkan tentang rasa benda)"],
+        ["むずかしい", "sulit, susah"],
+        ["やさしい", "mudah, gampang"],
+        ["たかい", "mahal, tinggi"],
+        ["やすい", "murah"],
+        ["ひくい", "rendah"],
+        ["おもしろい", "menarik"],
+        ["おいしい", "enak"],
+        ["いそがしい", "sibuk"],
+        ["たのしい", "senang"],
+        ["しろい", "putih"],
+        ["くろい", "hitam"],
+        ["あかい", "merah"],
+        ["あおい", "biru"],
+        ["さくら", "Sakura"],
+        ["やま", "gunung"],
+        ["まち", "kota"],
+        ["たべもの", "makanan"],
+        ["ところ", "tempat"],
+        ["りょう", "asrama"],
+        ["レストラン", "restoran"],
+        ["せいかつ", "kehidupan"],
+        ["[お]しごと", "pekerjaan (～を します: bekerja)"],
+        ["どう", "bagaimana"],
+        ["どんな ～", "yang bagaimana ～"],
+        ["とても", "sangat, ～ sekali"],
+        ["あまり", "kurang begitu ~, tidak begitu ~ (diikuti dengan kalimat negatif)"],
+        ["そして", "kemudian, dan (digunakan untuk menyambung kalimat)"],
+        ["～が、～", "～, tetapi ～"],
+        ["おげんきですか。", "Apa kabar?"],
+        ["そうですね。", "Bagaimana ya?"],
+        ["[～,] もう いっぱい いかがですか。", "Mau tambah [～] secangkir lagi?"],
+        ["[いいえ、] けっこうです。", "[Tidak,] terima kasih, saya sudah cukup."],
+        ["もう ～です[ね]。", "Sudah ～ [ya]."],
+        ["そろそろ しつれいします。", "Maaf, saya mau pamit dulu."],
+        ["いいえ。", "Sama-sama."],
+        ["また いらっしゃって ください。", "Silakan datang lagi."],
+        ["シャンハイ", "Shanghai"]
+    ],
+    // Bab 9
+    [
+        ["わかります", "mengerti"],
+        ["あります", "ada, mempunyai"],
+        ["すき[な]", "suka, gemar"],
+        ["きらい[な]", "tidak suka"],
+        ["じょうず[な]", "pandai, pintar"],
+        ["へた[な]", "tidak pandai, tidak pintar"],
+        ["のみもの", "minuman"],
+        ["りょうり", "masakan (～を します: memasak)"],
+        ["スポーツ", "olahraga (～を します: berolahraga)"],
+        ["やきゅう", "baseball (～を します: bermain baseball)"],
+        ["ダンス", "dansa (～を します: berdansa)"],
+        ["りょこう", "tamasya (～を します: melakukan perjalanan)"],
+        ["おんがく", "musik"],
+        ["うた", "lagu"],
+        ["クラシック", "klasik"],
+        ["ジャズ", "jaz"],
+        ["コンサート", "konser"],
+        ["カラオケ", "karaoke"],
+        ["かぶき", "Kabuki (salah satu drama tradisional Jepang)"],
+        ["え", "gambar"],
+        ["じ", "huruf"],
+        ["かんじ", "Kanji"],
+        ["ひらがな", "Hiragana"],
+        ["かたかな", "Katakana"],
+        ["ローマじ", "huruf latin"],
+        ["こまかい おかね", "uang kecil, receh"],
+        ["チケット", "tiket"],
+        ["じかん", "jam, waktu"],
+        ["ようじ", "urusan"],
+        ["やくそく", "janji (～[を] します: membuat janji)"],
+        ["アルバイト", "kerja paruh waktu (～を します: bekerja paruh waktu)"],
+        ["ごしゅじん", "suami (digunakan untuk menyebutkan suami orang lain)"],
+        ["おっと / しゅじん", "suami"],
+        ["おくさん", "istri (digunakan untuk menyebutkan istri orang lain)"],
+        ["つま / かない", "istri"],
+        ["こども", "anak"],
+        ["よく", "dengan baik"],
+        ["だいたい", "kira-kira"],
+        ["たくさん", "banyak"],
+        ["すこし", "sedikit"],
+        ["ぜんぜん", "sama sekali (diikuti kalimat negatif)"],
+        ["はやく", "dengan cepat"],
+        ["～から", "karena ~, sebab ~"],
+        ["どうして", "kenapa"],
+        ["かして ください。", "Tolong pinjamkan."],
+        ["いいですよ。", "Boleh."],
+        ["ざんねんです[が]", "sayang sekali"],
+        ["ああ", "ah, oh"],
+        ["いっしょに いかがですか。", "Bagaimana kalau bersama-sama?"],
+        ["[～は] ちょっと……。", "Maaf ya, saya tidak bisa [～]. (ungkapan untuk menolak ajakan orang secara tidak langsung)"],
+        ["だめですか。", "Tidak bisa?/Tidak boleh ya?"],
+        ["また こんど おねがいします。", "Maaf, lain kali saja. (ungkapan untuk menolak ajakan orang secara tidak langsung dengan menjaga perasaan lawan bicara)"]
+    ],
+    // Bab 10
+    [
+        ["あります", "ada (digunakan untuk benda mati)"],
+        ["います", "ada (digunakan untuk makhluk hidup)"],
+        ["いろいろ[な]", "berbagai"],
+        ["おとこの ひと", "orang laki-laki"],
+        ["おんなの ひと", "orang perempuan"],
+        ["おとこの こ", "anak laki-laki"],
+        ["おんなの こ", "anak perempuan"],
+        ["いぬ", "anjing"],
+        ["ねこ", "kucing"],
+        ["パンダ", "panda"],
+        ["ぞう", "gajah"],
+        ["き", "pohon"],
+        ["もの", "barang"],
+        ["でんち", "baterai"],
+        ["はこ", "kotak"],
+        ["スイッチ", "tombol, sakelar"],
+        ["れいぞうこ", "kulkas, lemari es"],
+        ["テーブル", "meja makan"],
+        ["ベッド", "tempat tidur"],
+        ["たな", "lemari"],
+        ["ドア", "pintu"],
+        ["まど", "jendela"],
+        ["ポスト", "kotak surat"],
+        ["ビル", "gedung"],
+        ["ATM", "ATM, Anjungan Tunai Mandiri"],
+        ["コンビニ", "toko 24 jam"],
+        ["こうえん", "taman"],
+        ["きっさてん", "coffee shop"],
+        ["～や", "toko ～"],
+        ["のりば", "tempat naik"],
+        ["けん", "prefektur"],
+        ["うえ", "atas"],
+        ["した", "bawah"],
+        ["まえ", "depan, muka"],
+        ["うしろ", "belakang"],
+        ["みぎ", "kanan"],
+        ["ひだり", "kiri"],
+        ["なか", "dalam"],
+        ["そと", "luar"],
+        ["となり", "sebelah"],
+        ["ちかく", "dekat"],
+        ["あいだ", "antara"],
+        ["～や ～[など]", "～ dan ～ [dan lain-lain]"],
+        ["[どうも] すみません。", "Terima kasih [banyak]."],
+        ["ナンプラー", "kecap ikan"],
+        ["コーナー", "tempat/bagian penjualan"],
+        ["いちばん した", "paling bawah"],
+        ["とうきょうディズニーランド", "Tokyo Disneyland"]
+    ],
+    // Bab 11
+    [
+        ["います [こどもが～]", "ada, mempunyai [anak]"],
+        ["います [にほんに～]", "ada [di Jepang]"],
+        ["かかります", "memakan, perlu (digunakan untuk waktu dan uang)"],
+        ["やすみます [かいしゃを～]", "tidak masuk [kerja]"],
+        ["ひとつ", "satu (kata bantu bilangan yang digunakan untuk menghitung barang)"],
+        ["ふたつ", "dua"],
+        ["みっつ", "tiga"],
+        ["よっつ", "empat"],
+        ["いつつ", "lima"],
+        ["むっつ", "enam"],
+        ["ななつ", "tujuh"],
+        ["やっつ", "delapan"],
+        ["ここのつ", "sembilan"],
+        ["とお", "sepuluh"],
+        ["いくつ", "berapa"],
+        ["ひとり", "seorang"],
+        ["ふたり", "dua orang"],
+        ["～にん", "～ orang"],
+        ["～だい", "buah (kata bantu bilangan yang digunakan untuk menghitung mesin dan mobil)"],
+        ["～まい", "lembar, helai (kata bantu bilangan yang digunakan untuk menghitung kertas dan perangko)"],
+        ["～かい", "～ kali"],
+        ["りんご", "apel"],
+        ["みかん", "jeruk"],
+        ["サンドイッチ", "sandwich"],
+        ["カレー[ライス]", "[nasi dan] kare"],
+        ["アイスクリーム", "es krim"],
+        ["きって", "perangko"],
+        ["はがき", "kartu pos"],
+        ["ふうとう", "amplop"],
+        ["りょうしん", "orang tua"],
+        ["きょうだい", "saudara, saudari"],
+        ["あに", "kakak laki-laki (untuk menyebutkan kakak sendiri)"],
+        ["おにいさん", "kakak laki-laki (untuk menyebutkan kakak laki-laki orang lain)"],
+        ["あね", "kakak perempuan (untuk menyebutkan kakak sendiri)"],
+        ["おねえさん", "kakak perempuan (untuk menyebutkan kakak perempuan orang lain)"],
+        ["おとうと", "adik laki-laki (untuk menyebutkan adik sendiri)"],
+        ["おとうとさん", "adik laki-laki (untuk menyebutkan adik laki-laki orang lain)"],
+        ["いもうと", "adik perempuan (untuk menyebutkan adik sendiri)"],
+        ["いもうとさん", "adik perempuan (untuk menyebutkan adik perempuan orang lain)"],
+        ["がいこく", "luar negeri"],
+        ["りゅうがくせい", "pelajar asing"],
+        ["クラス", "kelas"],
+        ["～じかん", "～ jam"],
+        ["～しゅうかん", "～ minggu"],
+        ["～かげつ", "～ bulan"],
+        ["～ねん", "～ tahun"],
+        ["～ぐらい", "kira-kira ～"],
+        ["どのくらい", "berapa lama"],
+        ["ぜんぶで", "semuanya"],
+        ["みんな", "semua"],
+        ["～だけ", "hanya ～, ～ saja"],
+        ["かしこまりました。", "Baik."],
+        ["いい [お]てんきですね。", "Cuacanya bagus ya."],
+        ["おでかけですか。", "Mau keluar?"],
+        ["ちょっと ～まで。", "Ke ～ sebentar."],
+        ["いって いらっしゃい。", "Hati-hati."],
+        ["いって きます。", "Saya berangkat."],
+        ["ふなびん", "pos laut"],
+        ["こうくうびん (エアメール)", "pos udara"],
+        ["おねがいします。", "Tolong."],
+        ["オーストラリア", "Australia"]
+    ],
+    // Bab 12
+    [
+        ["かんたん[な]", "mudah, gampang"],
+        ["ちかい", "dekat"],
+        ["とおい", "jauh"],
+        ["はやい", "cepat"],
+        ["おそい", "lambat"],
+        ["おおい [ひとが～]", "banyak [orang]"],
+        ["すくない [ひとが～]", "sedikit [orang]"],
+        ["あたたかい", "hangat"],
+        ["すずしい", "sejuk"],
+        ["あまい", "manis"],
+        ["からい", "pedas"],
+        ["おもい", "berat"],
+        ["かるい", "ringan"],
+        ["いい [コーヒーが～]", "lebih baik [kopi]"],
+        ["きせつ", "musim"],
+        ["はる", "musim semi"],
+        ["なつ", "musim panas"],
+        ["あき", "musim gugur"],
+        ["ふゆ", "musim dingin"],
+        ["てんき", "cuaca"],
+        ["あめ", "hujan"],
+        ["ゆき", "salju"],
+        ["くもり", "mendung"],
+        ["ホテル", "hotel"],
+        ["くうこう", "bandara"],
+        ["うみ", "laut"],
+        ["せかい", "dunia"],
+        ["パーティー", "pesta (～を します: berpesta)"],
+        ["[お]まつり", "perayaan"],
+        ["すきやき", "Sukiyaki (masakan yang dimasak daging sapi dan sayur dalam panci)"],
+        ["さしみ", "Sashimi (ikan mentah yang dipotong tipis)"],
+        ["[お]すし", "Sushi (nasi dicampur cuka yang di atasnya diberi ikan mentah)"],
+        ["てんぷら", "Tempura (gorengan sari laut dan sayur yang dipakai tepung terigu)"],
+        ["ぶたにく", "daging babi"],
+        ["とりにく", "daging ayam"],
+        ["ぎゅうにく", "daging sapi"],
+        ["レモン", "lemon"],
+        ["いけばな", "seni merangkai bunga (～を します: merangkai bunga)"],
+        ["もみじ", "maple, daun yang berubah warna menjadi merah"],
+        ["どちら", "yang mana"],
+        ["どちらも", "dua-duanya, yang mana juga"],
+        ["いちばん", "paling"],
+        ["ずっと", "jauh lebih"],
+        ["はじめて", "untuk pertama kali"],
+        ["ただいま。", "Saya kembali./Saya pulang."],
+        ["おかえりなさい。", "Sudah pulang ya."],
+        ["わあ、すごい ひとですね。", "Wah, banyak orang."],
+        ["つかれました。", "Lelah."],
+        ["ホンコン", "Hong Kong"],
+        ["シンガポール", "Singapura"]
+    ],
+    // Bab 13
+    [
+        ["あそびます", "bermain"],
+        ["およぎます", "berenang"],
+        ["むかえます", "menjemput"],
+        ["つかれます", "lelah (jika menyatakan keadaan lelah, digunakan bentuk た seperti つかれました)"],
+        ["けっこんします", "menikah"],
+        ["かいものします", "berbelanja"],
+        ["しょくじします", "makan"],
+        ["さんぽします [こうえんを～]", "berjalan-jalan [di taman]"],
+        ["たいへん[な]", "berat, susah"],
+        ["ほしい", "ingin, mau"],
+        ["ひろい", "luas"],
+        ["せまい", "sempit"],
+        ["プール", "kolam renang"],
+        ["かわ", "sungai"],
+        ["びじゅつ", "seni"],
+        ["つり", "pancing (～を します: memancing)"],
+        ["スキー", "ski (～を します: bermain ski)"],
+        ["しゅうまつ", "akhir pekan"],
+        ["[お]しょうがつ", "tahun baru"],
+        ["～ごろ", "sekitar ～, kira-kira"],
+        ["なにか", "sesuatu"],
+        ["どこか", "suatu tempat"],
+        ["のどが かわきます", "haus (jika menyatakan keadaan haus, digunakan bentuk た seperti のどが かわきました)"],
+        ["おなかが すきます", "lapar (jika menyatakan keadaan lapar, digunakan bentuk た seperti おなかが すきました)"],
+        ["そう しましょう。", "Ya, mari. (digunakan ketika menyetujui aksi yang disarankan oleh lawan bicara)"],
+        ["ごちゅうもんは？", "Mau pesan apa?"],
+        ["ていしょく", "menu paket"],
+        ["ぎゅうどん", "Gyudon"],
+        ["[しょうしょう] おまち ください。", "Tunggu [sebentar]."],
+        ["～で ございます。", "(bentuk halus dari です)"],
+        ["べつべつに", "sendiri-sendiri, masing-masing"]
+    ],
+    // Bab 14
+    [
+        ["つけます", "menyalakan, memasang, menghidupkan"],
+        ["けします", "mematikan, memadamkan"],
+        ["あけます", "membuka"],
+        ["しめます", "menutup"],
+        ["いそぎます", "buru-buru"],
+        ["まちます", "menunggu"],
+        ["もちます", "membawa"],
+        ["とります", "mengambil"],
+        ["てつだいます", "membantu"],
+        ["よびます", "memanggil"],
+        ["はなします", "berbicara"],
+        ["つかいます", "memakai"],
+        ["とめます", "menghentikan, memarkir"],
+        ["みせます", "memperlihatkan"],
+        ["おしえます [じゅうしょを～]", "memberitahukan [alamat]"],
+        ["すわります", "duduk"],
+        ["たちます", "berdiri"],
+        ["はいります [きっさてんに～]", "masuk [ke coffee shop]"],
+        ["でます [きっさてんを～]", "keluar [dari coffee shop]"],
+        ["ふります [あめが～]", "turun [hujan]"],
+        ["コピーします", "memfotokopi"],
+        ["でんき", "listrik, lampu"],
+        ["エアコン", "AC"],
+        ["パスポート", "paspor"],
+        ["なまえ", "nama"],
+        ["じゅうしょ", "alamat"],
+        ["ちず", "peta"],
+        ["しお", "garam"],
+        ["さとう", "gula"],
+        ["もんだい", "masalah, soal"],
+        ["こたえ", "jawaban"],
+        ["よみかた", "cara membaca"],
+        ["～かた", "cara ～"],
+        ["まっすぐ", "lurus"],
+        ["ゆっくり", "pelan-pelan, istirahat dengan baik"],
+        ["すぐ", "segera, langsung"],
+        ["また", "lagi"],
+        ["あとで", "nanti"],
+        ["もう すこし", "sedikit lagi"],
+        ["もう ～", "～ lagi"],
+        ["さあ", "mari (digunakan ketika mengajak atau menyuruh sesuatu kepada lawan bicara)"],
+        ["あれ？", "Ah? (digunakan ketika heran atau merasa aneh)"],
+        ["しんごうを みぎへ まがって ください。", "Tolong belok ke kanan di lampu lalu lintas."],
+        ["これで おねがいします。", "Minta dengan ini."],
+        ["おつり", "uang kembalian"],
+        ["みどりちょう", "kota fiksi"]
+    ],
+    // Bab 15
+    [
+        ["おきます", "meletakkan, menaruh"],
+        ["つくります", "membuat, membangun, memproduksi"],
+        ["うります", "menjual"],
+        ["しります", "mengetahui, mengenal"],
+        ["すみます", "tinggal"],
+        ["けんきゅうします", "meneliti"],
+        ["しりょう", "data, bahan"],
+        ["カタログ", "katalog"],
+        ["じこくひょう", "jadwal"],
+        ["ふく", "baju"],
+        ["せいひん", "produk"],
+        ["ソフト", "perangkat lunak"],
+        ["でんしじしょ", "kamus elektronik"],
+        ["けいざい", "ekonomi"],
+        ["しやくしょ", "kantor wali kota"],
+        ["こうこう", "SMA"],
+        ["はいしゃ", "dokter gigi"],
+        ["どくしん", "bujangan, belum berkeluarga"],
+        ["すみません", "Maaf."],
+        ["みなさん", "semuanya, bapak-bapak dan ibu-ibu sekalian"],
+        ["おもいだします", "teringat"],
+        ["いらっしゃいます", "bentuk hormat dari います"]
+    ]
+];
+
+let currentBab = 1;
+
+function renderCards() {
+    const container = document.getElementById('flashcard-grid');
+    container.innerHTML = '';
+
+    const currentData = babData[currentBab - 1];
+
+    currentData.forEach(item => {
+        const kana = item[0];
+        const arti = item[1];
+        const romaji = kanaToRomaji(kana);
+
+        const cardHTML = `
+        <div class="card group perspective-1000 cursor-pointer w-full aspect-[5/4] sm:h-36" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner relative w-full h-full transform-style-3d">
+                
+                <!-- Sisi Depan -->
+                <div class="absolute inset-0 backface-hidden bg-white border border-slate-200 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center p-3 text-center">
+                    <span class="kana-font text-lg sm:text-2xl font-bold text-slate-800 leading-snug px-1">${kana}</span>
+                </div>
+                
+                <!-- Sisi Belakang -->
+                <div class="absolute inset-0 backface-hidden rotate-y-180 bg-[#f0fdf4] border-2 border-[#6ee7b7] rounded-2xl shadow-sm flex flex-col items-center justify-center p-3 text-center">
+                    <span class="text-xs sm:text-sm italic text-teal-600 mb-1 font-medium">[${romaji}]</span>
+                    <span class="text-xs sm:text-sm text-slate-800 font-bold leading-snug px-1">${arti}</span>
+                </div>
+                
+            </div>
+        </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHTML);
+    });
+
+    document.getElementById('bab-title').textContent = `Pelajaran ${currentBab}`;
+    document.getElementById('curr-page').textContent = currentBab;
+    document.getElementById('tot-page').textContent = babData.length;
+    document.getElementById('tot-words').textContent = `(${currentData.length} Kosakata)`;
+    
+    document.getElementById('btn-prev').disabled = currentBab === 1;
+    document.getElementById('btn-next').disabled = currentBab === babData.length;
+}
+
+function changeBab(direction) {
+    const newBab = currentBab + direction;
+    if (newBab >= 1 && newBab <= babData.length) {
+        currentBab = newBab;
+        renderCards();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function shuffleArray(array) {
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+}
+
+function resetCards() {
+    shuffleArray(babData[currentBab - 1]);
+    renderCards();
+}
+
+function prepareAndPrint() {
+    const printContainer = document.getElementById('print-container');
+    printContainer.innerHTML = '';
+    
+    const currentData = babData[currentBab - 1];
+    const headerHTML = `<h2 style="text-align:center; font-size: 22px; font-family: sans-serif; margin-bottom: 24px; color: #0f172a;">Daftar Kosakata Pelajaran ${currentBab} (${currentData.length} Kosakata)</h2>`;
+    
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+    grid.style.gap = '12px';
+    
+    currentData.forEach((item, index) => {
+        const kana = item[0];
+        const arti = item[1];
+        const romaji = kanaToRomaji(kana);
+        
+        const cardHTML = `
+            <div style="border: 2px solid #e2e8f0; padding: 12px; text-align: center; border-radius: 12px; page-break-inside: avoid; font-family: sans-serif;">
+                <div style="font-size: 11px; color: #94a3b8; text-align: left; margin-bottom: 4px;">#${index + 1}</div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 6px; font-family: 'Noto Sans JP', sans-serif; color: #1e293b;">${kana}</div>
+                <div style="font-size: 11px; color: #0d9488; margin-bottom: 4px; font-style: italic;">[${romaji}]</div>
+                <div style="font-size: 12px; font-weight: bold; color: #0f172a;">${arti}</div>
+            </div>
+        `;
+        grid.insertAdjacentHTML('beforeend', cardHTML);
+    });
+    
+    printContainer.insertAdjacentHTML('afterbegin', headerHTML);
+    printContainer.appendChild(grid);
+    
+    setTimeout(() => {
+        window.print();
+    }, 400);
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-message').textContent = message;
+    toast.classList.remove('opacity-0');
+    setTimeout(() => {
+        toast.classList.add('opacity-0');
+    }, 3000);
+}
+
+function shareApp() {
+    if (navigator.share) {
+        navigator.share({
+            title: `Flashcard Kotoba - Pelajaran ${currentBab}`,
+            text: `Latihan Flashcard Kotoba Pelajaran ${currentBab} Minna no Nihongo.`,
+            url: window.location.href
+        }).catch(err => console.log(err));
+    } else {
+        try {
+            const tempInput = document.createElement('input');
+            tempInput.value = window.location.href;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast("Link berhasil disalin!");
+        } catch (err) {
+            showToast("Browser tidak mendukung fitur ini.");
+        }
+    }
+}
+
+renderCards();
+</script>
+
+</body>
+</html>
